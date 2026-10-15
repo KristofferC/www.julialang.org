@@ -61,37 +61,67 @@ Nightly builds are also available through the `nightly` channel on `juliaup`.
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  // Get the table with class "downloads"
-  var downloadsTable = document.querySelector(".downloads");
+  // Get all the links in the tables with class "downloads"
+  var links = document.querySelectorAll(".downloads a");
 
-  // Check if the table is found
-  if (downloadsTable) {
-    // Get all the links in the table
-    var links = downloadsTable.querySelectorAll("a");
+  // Iterate through each link
+  links.forEach(function (link) {
+    // Get the href attribute of the link
+    var href = link.getAttribute("href");
 
-    // Iterate through each link
-    links.forEach(function (link) {
-      // Get the href attribute of the link
-      var href = link.getAttribute("href");
-
-      if (href.startsWith("https://julialangnightlies-s3.julialang.org/")) {
-        // Fetch the last-modified header of the link
-        fetch(href, { method: "HEAD" })
-          .then(function (response) {
-            // Check if the last-modified header is present
-            if (response.headers.has("last-modified")) {
-              // Set the hint text to the last-modified value
-              var lastModified = response.headers.get("last-modified");
-              link.setAttribute("title", "Last Modified: " + lastModified);
-            }
-          })
-          .catch(function (error) {
-            console.error("Error fetching last-modified header for " + href + " :", error);
-          });
-      }
-    });
-  }
+    if (href.startsWith("https://julialangnightlies-s3.julialang.org/")) {
+      // Fetch the last-modified header of the link
+      fetch(href, { method: "HEAD" })
+        .then(function (response) {
+          // Check if the last-modified header is present
+          if (response.headers.has("last-modified")) {
+            // Set the hint text to the last-modified value
+            var lastModified = response.headers.get("last-modified");
+            link.setAttribute("title", "Last Modified: " + lastModified);
+          }
+        })
+        .catch(function (error) {
+          console.error("Error fetching last-modified header for " + href + " :", error);
+        });
+    }
+  });
 });
 </script>
 
+~~~
+
+## Optimized and assertion nightlies
+
+The `nightly+opt` and `nightly+assert` channels on `juliaup` (`juliaup list` shows all variants). Optimized nightlies are built once a day.
+
+~~~
+<table class="downloads table table-hover table-bordered">
+  <tbody>
+  <tr>
+      <th> Platform</th>
+      <th> Optimized</th>
+      <th> Assertions</th>
+  </tr>
+  <tr>
+      <td> Windows (x86-64)</td>
+      <td> <a href="https://julialangnightlies-s3.julialang.org/bin/windowsopt/x86_64/julia-latest-windowsopt-x86_64.exe">installer</a>, <a href="https://julialangnightlies-s3.julialang.org/bin/windowsopt/x86_64/julia-latest-windowsopt-x86_64.zip">portable</a> </td>
+      <td> </td>
+  </tr>
+  <tr>
+      <td> macOS</td>
+      <td> <a href="https://julialangnightlies-s3.julialang.org/bin/macosopt/x86_64/julia-latest-macosopt-x86_64.dmg">Intel</a>, <a href="https://julialangnightlies-s3.julialang.org/bin/macosopt/aarch64/julia-latest-macosopt-aarch64.dmg">Apple Silicon</a> </td>
+      <td> </td>
+  </tr>
+  <tr>
+      <td> Generic Linux on x86 </td>
+      <td> <a href="https://julialangnightlies-s3.julialang.org/bin/linuxopt/x86_64/julia-latest-linuxopt-x86_64.tar.gz">64-bit</a>, <a href="https://julialangnightlies-s3.julialang.org/bin/linuxopt/i686/julia-latest-linuxopt-i686.tar.gz">32-bit</a> </td>
+      <td> <a href="https://julialangnightlies-s3.julialang.org/bin/linuxassert/x86_64/julia-latest-linuxassert-x86_64.tar.gz">64-bit</a> </td>
+  </tr>
+  <tr>
+      <td> Generic Linux on ARM </td>
+      <td> <a href="https://julialangnightlies-s3.julialang.org/bin/linuxopt/aarch64/julia-latest-linuxopt-aarch64.tar.gz">.tar.gz</a> </td>
+      <td> </td>
+  </tr>
+  </tbody>
+</table>
 ~~~
