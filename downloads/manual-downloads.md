@@ -101,6 +101,146 @@
 ~~~
 @@ @@
 
+~~~
+<div id="variant_builds_section" hidden>
+<h3 id="variant_builds"><a href="#variant_builds">Optimized and assertion builds of v<span class="variant-version"></span></a></h3>
+~~~
+
+The same sources built differently: **optimized** builds use profile-guided optimization (PGO) and ThinLTO, and on Linux x86-64 and ARM also BOLT, which makes compilation and package loading faster; **assertion** builds enable Julia's and LLVM's internal checks, for debugging Julia itself. Install them with `juliaup add release+opt` (or `release+assert`), or download them below. See [the platform notes](/downloads/platform/#optimized_and_assertion_builds).
+
+~~~
+<p id="variant_builds_lagging" hidden>The optimized and assertion builds of a release are published some hours after it, platform by platform. Where a row below shows an older version, the newest release's build is not out yet for that platform, and <code>juliaup add release+opt</code> does not work there yet; the command in that row installs the listed version for that row's architecture instead.</p>
+~~~
+
+@@row @@col-12
+~~~
+<table class="downloads table table-hover table-bordered">
+  <thead>
+    <tr>
+      <th> Platform</th>
+      <th> Optimized</th>
+      <th> Assertions</th>
+    </tr>
+  </thead>
+  <tbody id="variant_builds_rows">
+  </tbody>
+</table>
+</div>
+<script>
+  // Listed from versions.json, so that only builds that exist are linked: a
+  // release's variants are published per platform, some hours after it.
+  // versions.json lists a variant's tarball only; its other formats sit next to
+  // it under the same name, and a platform is only promoted with all of them.
+  (function () {
+    var platforms = [
+      ["winnt", "x86_64", "Windows (x86-64)"],
+      ["mac", "aarch64", "macOS (Apple Silicon)"],
+      ["mac", "x86_64", "macOS (Intel x86)"],
+      ["linux", "x86_64", "Generic Linux on x86-64"],
+      ["linux", "i686", "Generic Linux on x86 (32-bit)"],
+      ["linux", "aarch64", "Generic Linux on ARM"]
+    ];
+    var variants = ["opt", "assert"];
+    var labels = { exe: "installer", zip: "portable", dmg: ".dmg", "tar.gz": ".tar.gz" };
+    var formats = { winnt: ["exe", "zip", "tar.gz"], mac: ["dmg", "tar.gz"], linux: ["tar.gz"] };
+    // juliaup's names for the architectures, for channels like 1.14.0+opt~x86
+    var juliaupArch = { x86_64: "x64", i686: "x86", aarch64: "aarch64" };
+
+    function parse(version) {
+      var m = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+      return m && [+m[1], +m[2], +m[3]];
+    }
+
+    function link(href, text) {
+      var a = document.createElement("a");
+      a.href = href;
+      a.textContent = text;
+      return a;
+    }
+
+    function cell(files, version, variant, newest, arch) {
+      var td = document.createElement("td");
+      var tarball = files.filter(function (file) { return file.extension === "tar.gz"; })[0];
+      files = tarball ? formats[tarball.os].map(function (extension) {
+        return { os: tarball.os, extension: extension, url: tarball.url.replace(/tar\.gz$/, extension) };
+      }) : [];
+      files.forEach(function (file, i) {
+        if (i > 0) td.appendChild(document.createTextNode(", "));
+        td.appendChild(link(file.url, labels[file.extension] || file.extension));
+        if (file.extension === "tar.gz" && file.os === "linux") {
+          td.appendChild(document.createTextNode(" ("));
+          td.appendChild(link(file.url + ".asc", "GPG"));
+          td.appendChild(document.createTextNode(")"));
+        }
+      });
+      if (files.length && version !== newest) {
+        var note = document.createElement("div");
+        note.appendChild(document.createTextNode("v" + version + ": "));
+        var code = document.createElement("code");
+        code.textContent = "juliaup add " + version + "+" + variant + "~" + juliaupArch[arch];
+        note.appendChild(code);
+        td.appendChild(note);
+      }
+      return td;
+    }
+
+    fetch("https://julialang-s3.julialang.org/bin/versions.json")
+      .then(function (response) { return response.json(); })
+      .then(function (versions) {
+        // The stable releases of the newest release series, newest first.
+        var releases = Object.keys(versions)
+          .filter(function (v) { return versions[v].stable && parse(v); })
+          .sort(function (a, b) {
+            var x = parse(a), y = parse(b);
+            return y[0] - x[0] || y[1] - x[1] || y[2] - x[2];
+          });
+        if (!releases.length) return;
+        var newest = releases[0];
+        var series = parse(newest).slice(0, 2).join(".");
+        releases = releases.filter(function (v) { return parse(v).slice(0, 2).join(".") === series; });
+
+        var rows = document.getElementById("variant_builds_rows");
+        var any = false, lagging = false;
+        platforms.forEach(function (platform) {
+          var tr = document.createElement("tr");
+          var name = document.createElement("td");
+          name.textContent = " " + platform[2];
+          tr.appendChild(name);
+          var listed = false;
+          variants.forEach(function (variant) {
+            // The newest release that has this variant for this platform.
+            var version, files = [];
+            for (var i = 0; i < releases.length && !files.length; i++) {
+              version = releases[i];
+              files = (versions[version].variants || []).filter(function (file) {
+                return file.os === platform[0] && file.arch === platform[1] &&
+                  (file.variants || []).indexOf(variant) !== -1;
+              });
+            }
+            if (files.length) {
+              listed = true;
+              lagging = lagging || version !== newest;
+            }
+            tr.appendChild(cell(files, version, variant, newest, platform[1]));
+          });
+          if (listed) {
+            rows.appendChild(tr);
+            any = true;
+          }
+        });
+        if (!any) return;
+        document.querySelectorAll(".variant-version").forEach(function (el) { el.textContent = newest; });
+        document.getElementById("variant_builds_lagging").hidden = !lagging;
+        document.getElementById("variant_builds_section").hidden = false;
+      })
+      .catch(function (error) {
+        console.error("Error listing the optimized and assertion builds:", error);
+      });
+  })();
+</script>
+~~~
+@@ @@
+
 Almost everyone should be downloading and using the latest stable release of Julia.
 Great care is taken not to break compatibility with older Julia versions, so older code should continue to work with the latest stable Julia release.
 You should *only* be using the long-term support (LTS) version of Julia if you work at an organization where implementing or certifying upgrades is prohibitively expensive and there is no need for new language features or packages. See this description of ["Risk Personas"](/blog/2019/08/release-process/#risk_tolerance_personas) for more detail on who should be using what versions of Julia based on their risk tolerance. See this blog post on [Julia's Release Process](/blog/2019/08/release-process/) for more information on different kinds of releases.

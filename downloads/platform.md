@@ -110,6 +110,15 @@ To launch Julia, simply type `julia` inside your shell and press return.
 
 You can uninstall Julia by deleting Julia.app and the packages directory in `~/.julia`. Multiple Julia.app binaries can co-exist without interfering with each other. If you would also like to remove your preferences files, remove `~/.julia/config/startup.jl` and `~/.julia/logs/repl_history.jl`.
 
+## Optimized and assertion builds
+
+From Julia 1.14, every release also comes in two other builds of the same sources, which `juliaup` installs next to the standard one:
+
+- **Optimized** (`juliaup add release+opt`, or e.g. `1.14+opt`): built with profile-guided optimization (PGO) and ThinLTO, and on Linux x86-64 and ARM also BOLT. Julia's compiler and runtime run faster, so code compiles and packages load faster; the code Julia generates for your programs is the same.
+- **Assertions** (`juliaup add release+assert`, Linux x86-64 only): Julia's and LLVM's internal consistency checks are enabled. These are slower and meant for debugging Julia itself, e.g. to turn a crash into a meaningful error for a bug report.
+
+The same variants exist for nightlies (`nightly+opt`, `nightly+assert`); `juliaup list` shows which builds are available for your platform. A release's optimized builds are published only once their tests pass; nightly ones are published even when their tests fail, so please report problems that only happen with them.
+
 ## A Brief Note About Unofficial Binaries
 
 There are a variety of distribution-specific packages that are community contributed. They may not use the right versions of Julia dependencies or include important patches that the official binaries ship with. All such distributions are community maintained, and hence they may not always have the latest versions of Julia, and sometimes, the instructions may not work. In general, bug reports will only be accepted if they are reproducible on the official generic binaries on the downloads page.
